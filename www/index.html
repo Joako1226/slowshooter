@@ -2536,8 +2536,8 @@ function makeVig() {
 function resize() {
   const r = canvas.getBoundingClientRect();
   W = Math.max(1, r.width); H = Math.max(1, r.height);
-  const base = Math.min(window.devicePixelRatio || 1, 1.5), cap = Math.sqrt(900000 / (W * H));
-  dpr = Math.max(.6, Math.min(base, cap) * drs);
+  const base = Math.min(window.devicePixelRatio || 1, 2), cap = Math.sqrt(1300000 / (W * H));
+  dpr = Math.max(.75, Math.min(base, cap) * drs);
   canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
   baseScale = H > W ? Math.min(W / 520, H / 700) : Math.min(W / 760, H / 560);
   TS = H > W ? 1.35 : 1;
@@ -2555,7 +2555,8 @@ function loop(ts) {
   const rawMs = Math.min(100, (ts - last) || 16);
   last = ts;
   ema = ema * .92 + rawMs * .08;
-  if (ema > 26 && ts - lastDrs > 1200 && drs > .55) { drs *= .85; lastDrs = ts; ema = 18; resize(); }
+  if (frameN > 90 && ema > 30 && ts - lastDrs > 2500 && drs > .7) { drs *= .88; lastDrs = ts; ema = 18; resize(); }
+  else if (ema < 14 && drs < 1 && ts - lastDrs > 6000) { drs = Math.min(1, drs * 1.1); lastDrs = ts; resize(); }
   const dt = Math.min(.1, rawMs / 1000);
   if (dt > .034) { update(dt / 2); update(dt / 2); } else update(dt);
   draw();

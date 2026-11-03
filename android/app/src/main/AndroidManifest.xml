@@ -27,7 +27,7 @@
 
         <!-- AdMob: ID de app (este es el de PRUEBA de Google; cámbialo por el tuyo) -->
         <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:name="com.google.android.gms.ads.ca-app-pub-2046215707383325~4340501927"
             android:value="ca-app-pub-3940256099942544~3347511713"/>
         <!-- Play Games Services: ID de proyecto de Play Console -->
         <meta-data

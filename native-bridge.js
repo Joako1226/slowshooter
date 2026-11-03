@@ -2,7 +2,7 @@
 // ====== CONFIGURACIÓN: sustituye por tus IDs reales antes de publicar ======
 const CFG = {
   testing: true,                                           // pon false con tus IDs reales
-  rewardedAdUnit: 'ca-app-pub-3940256099942544/5224354917', // ID de prueba de Google (rewarded)
+  rewardedAdUnit: 'ca-app-pub-2046215707383325/9122055316', // ID de prueba de Google (rewarded)
   leaderboards: {                                          // IDs de Play Games Services (uno por modo)
     classic: 'REEMPLAZA_ID_CLASICO',
     time: 'REEMPLAZA_ID_CONTRARRELOJ',
