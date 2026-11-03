@@ -206,6 +206,13 @@ button{touch-action:manipulation}
 .mini:disabled{background:#8a8498;box-shadow:0 3px 0 #4a4560;color:#2a2438}
 .prow{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:12px;background:#150e1f;border:3px solid #0b0612;color:#fff;font:700 15px var(--body)}
 .prow b{color:#ffd34a;font-variant-numeric:tabular-nums}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;margin-bottom:8px;border-radius:12px;background:#150e1f;border:3px solid #0b0612;color:#fff;font:700 16px var(--body)}
+.srow input[type=range]{width:46%;accent-color:#ffd34a}
+.seg{display:flex;gap:6px}.seg button{padding:8px 12px;border-radius:10px;border:2px solid #0b0612;background:#3a2c4d;color:#fff;font:700 14px var(--body);cursor:pointer;touch-action:manipulation}
+.seg button.on{background:var(--sun);color:#2a1a10}
+.sw{width:54px;height:30px;border-radius:15px;border:2px solid #0b0612;background:#3a2c4d;position:relative;flex:none;cursor:pointer;touch-action:manipulation;padding:0}
+.sw::after{content:'';position:absolute;top:2px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .15s}
+.sw[aria-checked=true]{background:#3fb04a}.sw[aria-checked=true]::after{left:26px}
 .bigav{display:grid;justify-items:center;align-content:start;min-height:170px;gap:4px;color:#fff;text-align:center}
 .bigav canvas{position:static;inset:auto;touch-action:auto;cursor:default;display:block;flex:none;width:110px;height:110px;border-radius:50%;border:4px solid #ffd34a;background:#2b1741}
 .bigav b{font:400 26px var(--display);text-shadow:0 2px 0 #0b0612}
@@ -299,6 +306,7 @@ button{touch-action:manipulation}
         <div class="chip2"><span class="ic" data-i="star"></span><b id="menuBank">0</b></div>
         <div class="chip2"><span class="ic" data-i="trophy"></span><b id="menuTrophy">0</b></div>
         <button class="ibtn" id="menuSnd" type="button" aria-label="Sonido"><span class="ic" id="sndIc" data-i="sound"></span></button>
+        <button class="ibtn" id="menuSet" type="button" aria-label="Ajustes"><span class="ic" data-i="gear"></span></button>
       </div>
       <button class="prof" id="profBtn" type="button" aria-label="Perfil">
         <span class="avatar"><canvas id="avCv" width="96" height="96" aria-hidden="true"></canvas><i class="lvbadge" id="mLvN">1</i></span>
@@ -515,13 +523,149 @@ function applyChar() {
 }
 function hud() {
   bankEl.textContent = bank;
-  scoreEl.textContent = score.toLocaleString('es-ES');
+  scoreEl.textContent = score.toLocaleString(LOC());
   chambers.forEach((c, i) => c.classList.toggle('full', i < ammo));
   comboEl.hidden = combo < 2;
   comboEl.textContent = 'x' + Math.min(5, combo) + (combo > 5 ? ' · ' + combo : '');
   runstEl.textContent = runStars;
 }
 function bumpScore() { scoreEl.classList.remove('bump'); void scoreEl.offsetWidth; scoreEl.classList.add('bump'); }
+
+/* ---------- Idioma y ajustes ---------- */
+const SET = { lang: String(navigator.language || 'es').toLowerCase().startsWith('es') ? 'es' : 'en', sfx: true, vol: .8, vib: true, shake: true, q: 'auto' };
+try { Object.assign(SET, JSON.parse(localStorage.getItem('tirolento-set') || '{}')); } catch (e) { /* nada */ }
+function saveSet() { try { localStorage.setItem('tirolento-set', JSON.stringify(SET)); } catch (e) { /* nada */ } }
+muted = !SET.sfx;
+function LOC() { return SET.lang === 'es' ? 'es-ES' : 'en-US'; }
+const EN = {
+  'Escenario del juego': 'Game stage', 'Puntos': 'Score', 'Récord': 'Best', 'Tienda': 'Shop', 'Sonido': 'Sound',
+  'Salir al menú': 'Back to menu', 'Arrastra el dedo hacia atrás y suelta para lanzarte': 'Drag your finger back and release to launch',
+  'Tiro completado': 'Shot complete', 'Nuevo récord': 'New best!', 'Objetivos': 'Targets', 'Mejor racha': 'Best streak', 'Distancia': 'Distance',
+  '×2 ★ con anuncio': '×2 ★ with ad', 'Otra vez': 'Again', 'Menú principal': 'Main menu', 'Menú': 'Menu', 'Has caído': 'You fell',
+  '¿Seguir jugando?': 'Keep playing?', 'Mira un anuncio y revives con impulso, escudo y balas llenas. Solo una vez por partida.': 'Watch an ad to revive with a boost, a shield and full ammo. Once per run.',
+  'Revivir (anuncio)': 'Revive (ad)', 'No, gracias': 'No thanks', 'Anuncio de prueba': 'Test ad', 'Tu anuncio iría aquí': 'Your ad would go here',
+  'Aquí se mostraría el anuncio recompensado de Google. Recompensa en': "Google's rewarded ad would show here. Reward in", 'Cerrar sin premio': 'Close without reward',
+  'Perfil': 'Profile', 'Tu perfil': 'Your profile', 'Personaje anterior': 'Previous character', 'Personaje siguiente': 'Next character', 'Modo de juego': 'Game mode', 'Modos de juego': 'Game modes',
+  'JUGAR': 'PLAY', 'Misiones del día': 'Daily missions', 'Misiones completadas': 'Missions completed', 'Misiones': 'Missions', 'Pase de batalla': 'Battle pass', 'Pase Oro: premios dobles y 4 personajes': 'Gold Pass: double rewards and 4 characters', 'Pase': 'Pass',
+  'Cerrar': 'Close', 'Personajes': 'Characters', 'Ajustes': 'Settings',
+  'Estrellas recogidas ★ ': 'Stars collected ★ ', 'Total ★ ': 'Total ★ ', 'Puntos ×': 'Score ×', 'Perfora ×': 'Pierce ×', 'Ráfaga ×': 'Burst ×', 'Escudo x': 'Shield x',
+  'COMPRAR ★ ': 'BUY ★ ', 'Comprar ★ ': 'Buy ★ ', 'FALTAN ★ ': 'NEED ★ ', 'faltan ': 'need ', ' balas': ' bullets', '+1 bala': '+1 bullet', '+3 balas': '+3 bullets', ' perdigones': ' pellets',
+  'Equipado': 'Equipped', 'Equipar': 'Equip', 'Explosivas': 'Explosive', 'Planea': 'Glides', 'Escudo': 'Shield', 'Planeo': 'Glide', 'Cohete': 'Rocket', 'Imán': 'Magnet', 'Frenesí': 'Frenzy', 'Gatillo loco': 'Rapid fire',
+  'Oro': 'Gold', 'Premio en el Pase': 'Reward in the Pass', 'completado': 'completed', '¡Tiempo!': "Time's up!", 'Cobrar': 'Claim',
+  'Novato': 'Rookie', 'Pistolero de oro': 'Golden Gunslinger', 'Pistolero': 'Gunslinger', 'Bandolero': 'Bandit', 'Forajido': 'Outlaw', 'Leyenda': 'Legend', 'Mito del Oeste': 'Myth of the West',
+  'Nivel ': 'Level ', '¡NIVEL ': 'LEVEL ', 'Nv ': 'Lv ',
+  'Clásico': 'Classic', 'Contrarreloj': 'Time Attack', 'Pólvora': 'Gunpowder',
+  'Sin final. Recargas balas muy despacio: apunta bien cada tiro.': 'Endless. Bullets reload very slowly: make every shot count.',
+  '30 s. Captura los relojes para ganar tiempo. El suelo te rebota.': '30 s. Grab clocks to gain time. The ground bounces you.',
+  'Solo 4 balas y casi sin ayudas. Puntos y ★ ×2.': 'Only 4 bullets and almost no help. Score and ★ ×2.',
+  'Se renuevan cada día. Las ★ se cobran al cumplirlas.': 'Refreshes every day. ★ are paid when completed.',
+  'Juega partidas para ganar XP y subir de nivel': 'Play runs to earn XP and level up', 'Partidas jugadas': 'Games played', 'Récord ': 'Best ',
+  'Acierta ': 'Hit ', ' objetivos': ' targets', 'Llega a ': 'Reach ', ' m en un solo tiro': ' m in a single shot', 'Consigue una racha de ': 'Get a streak of ',
+  'Recoge ': 'Collect ', ' estrellas': ' stars', 'Llega al espacio': 'Reach space', 'Rompe ': 'Break ', ' botellas doradas': ' golden bottles',
+  'Activa el Frenesí ': 'Trigger Frenzy ', ' veces': ' times', 'Puntúa ': 'Score ', ' en Contrarreloj': ' in Time Attack', 'Captura ': 'Capture ', ' relojes': ' clocks', 'Haz ': 'Make ', ' tiros perfectos': ' perfect shots',
+  '¡BOING!': 'BOING!', '¡DERRIBADO!': 'SHOT DOWN!', '¡EL CIELO!': 'HEAVEN!', '¡EL ESPACIO!': 'SPACE!', '¡ESCUDO!': 'SHIELD!', '¡FRENESÍ!': 'FRENZY!', '¡IMPACTO!': 'HIT!',
+  '¡IMPARABLE!': 'UNSTOPPABLE!', '¡IMPULSO!': 'BOOST!', '¡LEYENDA!': 'LEGENDARY!', '¡MISIL GRANDE!': 'BIG MISSILE!', '¡MISIL!': 'MISSILE!', '¡MISIÓN CUMPLIDA!': 'MISSION COMPLETE!',
+  '¡MULTI!': 'MULTI!', '¡PERFECTO!': 'PERFECT!', '¡REBOTE!': 'BOUNCE!', '¡REVIVES!': 'REVIVED!', '¡TRIPLE!': 'TRIPLE!',
+  '· El cielo': '· Heaven', '· Espacio': '· Space', 'Derribado por un misil': 'Shot down by a missile',
+  'Vaquero': 'Cowboy', 'Willy el Viejo': 'Old Willy', 'Rita Ráfagas': 'Rita Rapidfire', 'Sheriff Tex': 'Sheriff Tex', 'Don Charro': 'Don Charro', 'Fantasma': 'Ghost', 'Pepe Dinamita': 'Dynamite Pete',
+  'Equilibrado. Revólver de 6 balas.': 'Balanced. Six-shooter with 6 bullets.',
+  'Escopeta con solo 3 cartuchos. Cada disparo suelta perdigones y te empuja con fuerza.': 'Shotgun with only 3 shells. Each shot fires pellets and shoves you hard.',
+  'Cada toque lanza una ráfaga de 3 balas. 4 cargas.': 'Each tap fires a 3-bullet burst. 4 charges.', 'Cada toque lanza una ráfaga de 3 balas': 'Each tap fires a 3-bullet burst',
+  'Balas perforantes: atraviesan hasta 3 objetivos. 5 balas.': 'Piercing bullets: go through up to 3 targets. 5 bullets.', 'Tus balas atraviesan hasta 3 objetivos': 'Your bullets pierce up to 3 targets',
+  'Su sombrero le hace planear: cae mucho más despacio.': 'His hat lets him glide: he falls much slower.', 'Tu sombrero te hace caer más despacio': 'Your hat makes you fall slower',
+  'Empieza cada partida con un escudo. 5 balas.': 'Starts every run with a shield. 5 bullets.', 'Empiezas con un escudo que te salva del suelo una vez': 'You start with a shield that saves you from the ground once',
+  'Sus balas explotan al impactar, rompen lo que haya cerca y te empujan. 4 balas.': 'His bullets explode on impact, break anything nearby and push you. 4 bullets.', 'Tus balas explotan: dispara al suelo cerca de ti para subir': 'Your bullets explode: shoot the ground near you to rise',
+  'Puntos x2 y estrellas x2. 6 balas.': 'Score x2 and stars x2. 6 bullets.', 'Todo lo que consigas vale el doble': 'Everything you earn is worth double',
+  'Toca para disparar. Revienta dinamita cerca de ti para subir': 'Tap to shoot. Blow up dynamite near you to rise',
+  'Dispara hacia abajo: el retroceso de la escopeta te impulsa': 'Shoot downward: the shotgun recoil boosts you',
+  'Idioma': 'Language', 'Efectos de sonido': 'Sound effects', 'Volumen': 'Volume', 'Vibración': 'Vibration', 'Sacudida de pantalla': 'Screen shake', 'Calidad gráfica': 'Graphics quality', 'Alta': 'High', 'Baja': 'Low',
+  'Clasificación': 'Leaderboard', 'Anuncio no disponible': 'Ad not available'
+};
+const EN_RX = new RegExp(Object.keys(EN).sort((a, b) => b.length - a.length).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'g');
+const trCache = new Map();
+function tr(s) {
+  if (SET.lang === 'es' || typeof s !== 'string' || !/[A-Za-zÁ-ú]{2}/.test(s)) return s;
+  let r = trCache.get(s);
+  if (r === undefined) { r = s.replace(EN_RX, m => EN[m]); if (trCache.size > 800) trCache.clear(); trCache.set(s, r); }
+  return r;
+}
+const txRec = new WeakMap(), TR_ATTR = ['aria-label', 'title'];
+function trText(n) {
+  const cur = n.data, rec = txRec.get(n);
+  if (rec && rec.t === cur) return;
+  const t = tr(cur); txRec.set(n, { o: cur, t }); if (t !== cur) n.data = t;
+}
+function trAttrs(e) {
+  for (const a of TR_ATTR) {
+    if (!e.hasAttribute || !e.hasAttribute(a)) continue;
+    const cur = e.getAttribute(a), key = '_o_' + a, rec = e[key];
+    if (rec && rec.t === cur) continue;
+    const t = tr(cur); e[key] = { o: cur, t }; if (t !== cur) e.setAttribute(a, t);
+  }
+}
+function trTree(root) {
+  if (root.nodeType === 3) { trText(root); return; }
+  if (root.nodeType !== 1 || /^(SCRIPT|STYLE)$/.test(root.tagName)) return;
+  trAttrs(root);
+  const w = document.createTreeWalker(root, 5);
+  for (let n = w.nextNode(); n; n = w.nextNode()) { if (n.nodeType === 3) trText(n); else trAttrs(n); }
+}
+function untrTree(root) {
+  const w = document.createTreeWalker(root, 5);
+  for (let n = w.nextNode(); n; n = w.nextNode()) {
+    if (n.nodeType === 3) { const r = txRec.get(n); if (r && r.t === n.data) n.data = r.o; txRec.delete(n); }
+    else for (const a of TR_ATTR) { const r = n['_o_' + a]; if (r && n.getAttribute(a) === r.t) n.setAttribute(a, r.o); n['_o_' + a] = null; }
+  }
+}
+let trObs = null;
+function startTr() {
+  if (trObs || !window.MutationObserver) return;
+  trObs = new MutationObserver(recs => {
+    if (SET.lang === 'es') return;
+    for (const r of recs) {
+      if (r.type === 'characterData') trText(r.target);
+      else if (r.type === 'attributes') trAttrs(r.target);
+      else r.addedNodes.forEach(trTree);
+    }
+  });
+  trObs.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: TR_ATTR });
+}
+function setLang(l) {
+  SET.lang = l; saveSet(); trCache.clear(); document.documentElement.lang = l;
+  if (l === 'en') { startTr(); trTree(document.body); } else untrTree(document.body);
+  try { hud(); renderMenu(); } catch (e) { /* nada */ }
+}
+{ const ft = ctx.fillText, st = ctx.strokeText, mt = ctx.measureText;
+  ctx.fillText = function (t, ...a) { return ft.call(this, tr(t), ...a); };
+  ctx.strokeText = function (t, ...a) { return st.call(this, tr(t), ...a); };
+  ctx.measureText = function (t) { return mt.call(this, tr(t)); }; }
+function setSfx(v) { SET.sfx = v; muted = !v; saveSet(); sndBtn.setAttribute('aria-pressed', String(muted)); }
+function panelSettings() {
+  openPanel('Ajustes', box => {
+    const row = (label, ctrl) => { const r = el('div', 'srow'); r.append(el('span', '', label), ctrl); box.appendChild(r); };
+    const seg = (opts, cur, fn) => {
+      const s = el('div', 'seg');
+      for (const [v, t] of opts) { const b = el('button', cur === v ? 'on' : '', t); b.type = 'button'; b.addEventListener('click', () => { fn(v); panelSettings(); }); s.appendChild(b); }
+      return s;
+    };
+    const sw = (on, fn) => {
+      const b = el('button', 'sw'); b.type = 'button'; b.setAttribute('role', 'switch'); b.setAttribute('aria-checked', String(!!on));
+      b.addEventListener('click', () => { const v = b.getAttribute('aria-checked') !== 'true'; b.setAttribute('aria-checked', String(v)); fn(v); });
+      return b;
+    };
+    row('Idioma', seg([['es', 'Español'], ['en', 'English']], SET.lang, v => setLang(v)));
+    row('Efectos de sonido', sw(SET.sfx, v => { setSfx(v); if (v) sfx('click'); renderMenu(); }));
+    const vol = document.createElement('input'); vol.type = 'range'; vol.min = 0; vol.max = 100; vol.value = Math.round(SET.vol * 100); vol.setAttribute('aria-label', 'Volumen');
+    vol.addEventListener('input', () => { SET.vol = vol.value / 100; if (MG) MG.gain.value = SET.vol; });
+    vol.addEventListener('change', () => { saveSet(); if (SET.sfx) sfx('star'); });
+    row('Volumen', vol);
+    row('Vibración', sw(SET.vib, v => { SET.vib = v; saveSet(); if (v) vib('boost'); }));
+    row('Sacudida de pantalla', sw(SET.shake, v => { SET.shake = v; saveSet(); }));
+    row('Calidad gráfica', seg([['auto', 'Auto'], ['high', 'Alta'], ['low', 'Baja']], SET.q, v => { SET.q = v; drs = 1; saveSet(); resize(); }));
+  });
+}
+let MG = null;
+function master(a) { if (!MG || MG.context !== a) { MG = a.createGain(); MG.connect(a.destination); } MG.gain.value = SET.vol; return MG; }
 
 /* ---------- Sonido ---------- */
 function ac() {
@@ -541,7 +685,7 @@ function burst(a, o) {
   if (o.slide) f.frequency.exponentialRampToValueAtTime(Math.max(40, o.slide), t + dur);
   f.Q.value = o.q || .7;
   const g = a.createGain(); g.gain.setValueAtTime(o.g || .4, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
-  s.connect(f); f.connect(g); g.connect(a.destination); s.start();
+  s.connect(f); f.connect(g); g.connect(master(a)); s.start();
 }
 function tone(a, o) {
   const t = a.currentTime + (o.delay || 0), dur = o.dur || .15;
@@ -549,10 +693,10 @@ function tone(a, o) {
   os.frequency.setValueAtTime(o.f || 440, t);
   if (o.f2) os.frequency.exponentialRampToValueAtTime(o.f2, t + dur);
   const g = a.createGain(); g.gain.setValueAtTime(o.g || .2, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
-  os.connect(g); g.connect(a.destination); os.start(t); os.stop(t + dur + .03);
+  os.connect(g); g.connect(master(a)); os.start(t); os.stop(t + dur + .03);
 }
 const VIB = { shot: 12, boom: [40, 30, 70], boost: 40, land: 60, star: 8, launch: 25, frenzy: [30, 20, 30, 20, 60] };
-function vib(k) { try { if (navigator.vibrate && VIB[k]) navigator.vibrate(VIB[k]); } catch (e) { /* sin vibración */ } }
+function vib(k) { try { if (SET.vib && navigator.vibrate && VIB[k]) navigator.vibrate(VIB[k]); } catch (e) { /* sin vibración */ } }
 function sfx(k) {
   vib(k);
   const a = ac(); if (!a) return;
@@ -575,8 +719,7 @@ function sfx(k) {
   }
 }
 sndBtn.addEventListener('click', () => {
-  muted = !muted; sndBtn.setAttribute('aria-pressed', String(muted));
-  if (!muted) sfx('click');
+  setSfx(muted); if (!muted) sfx('click');
 });
 
 /* ---------- Escenario estático (parallax) ---------- */
@@ -789,6 +932,7 @@ function settleProg(total, dist) {
   if (ups.length) { sfx('frenzy'); confettiBurst(); }
 }
 const ICON = {
+  gear: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.4 13a7.7 7.7 0 000-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 00-1.7-1L15 3.3h-4l-.4 2.6a7.6 7.6 0 00-1.7 1l-2.5-1-2 3.5L6.6 11a7.7 7.7 0 000 2l-2.1 1.6 2 3.5 2.5-1a7.6 7.6 0 001.7 1l.4 2.6h4l.4-2.6a7.6 7.6 0 001.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z"/></svg>',
   home: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-3v9h-5v-6h-2v6H6v-9H3z"/></svg>',
   star: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.5 7 .9-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.9z"/></svg>',
   trophy: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 3h10v3h3a1 1 0 011 1c0 3-2 5-4.5 5.4A5 5 0 0113 15.9V18h3v3H8v-3h3v-2.1A5 5 0 018.5 12.4C6 12 4 10 4 7a1 1 0 011-1h2zM6 8c0 1.5 1 2.5 2 3V8zm12 0h-2v3c1-.5 2-1.5 2-3z"/></svg>',
@@ -925,7 +1069,7 @@ function panelModes() {
       try { bst = +localStorage.getItem(M.key) || 0; } catch (e) { /* nada */ }
       const b = el('button', 'mrow' + (id === modeId ? ' on' : '')); b.type = 'button';
       const big = el('span', 'big'); big.appendChild(icon(IC[id]));
-      const tx = el('span', 'tx'); tx.append(el('b', '', M.name), el('span', '', M.desc), el('em', '', 'Récord ' + bst.toLocaleString('es-ES')));
+      const tx = el('span', 'tx'); tx.append(el('b', '', M.name), el('span', '', M.desc), el('em', '', 'Récord ' + bst.toLocaleString(LOC())));
       b.append(big, tx);
       if (id === modeId) { const rw = el('span', 'rw'); rw.appendChild(icon('check')); b.appendChild(rw); }
       b.addEventListener('click', () => { setMode(id); closePanel(); });
@@ -999,7 +1143,7 @@ function panelProfile() {
     drawAvatar(cv, chr());
     const row = (a, b) => { const r = el('div', 'prow'); r.append(el('span', '', a), el('b', '', String(b))); box.appendChild(r); };
     row('Partidas jugadas', prog.runs); row('Misiones completadas', prog.mc || 0);
-    for (const id of Object.keys(MODES)) { let v = 0; try { v = +localStorage.getItem(MODES[id].key) || 0; } catch (e) { /* nada */ } row('Récord ' + MODES[id].name, v.toLocaleString('es-ES')); }
+    for (const id of Object.keys(MODES)) { let v = 0; try { v = +localStorage.getItem(MODES[id].key) || 0; } catch (e) { /* nada */ } row('Récord ' + MODES[id].name, v.toLocaleString(LOC())); }
     row('Personajes', owned.length + ' / ' + CHARS.length);
     row('Pase de batalla', Math.min(prog.lvl, PASS_N) + ' / ' + PASS_N + (prog.premium ? ' · Oro' : ''));
   });
@@ -1343,7 +1487,7 @@ function rollNumber(el, to) {
   const step = () => {
     if (id !== rollId) return;
     const u = Math.min(1, (Date.now() - t0) / dur), e = 1 - Math.pow(1 - u, 3);
-    el.textContent = Math.round(to * e).toLocaleString('es-ES');
+    el.textContent = Math.round(to * e).toLocaleString(LOC());
     if (u < 1) requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
@@ -1457,14 +1601,14 @@ function update(dt) {
       while (skyX < minX + 1000) { genSkyGroup(skyX); skyX += rnd(380, 640); }
     } else if (skyX < gs.x) skyX = gs.x;
     const altM = Math.max(0, Math.round(altOf(gs.y)));
-    altEl.hidden = altM < 20; altvEl.textContent = altM.toLocaleString('es-ES');
+    altEl.hidden = altM < 20; altvEl.textContent = altM.toLocaleString(LOC());
     altzEl.textContent = altM >= ZONE_HEAVEN ? '· El cielo' : altM >= ZONE_SPACE ? '· Espacio' : '';
     if (zoneReached < 1 && altM >= ZONE_SPACE) { zoneReached = 1; mEvent('space', 1); zoneToast('¡EL ESPACIO!', 8); }
     if (zoneReached < 2 && altM >= ZONE_HEAVEN) { zoneReached = 2; mEvent('space', 1); zoneToast('¡EL CIELO!', 30); }
     for (const k of ALLK) if (k !== 'shield' && fx[k] > 0) fx[k] = Math.max(0, fx[k] - dt);
     if (held && fx.rapid > 0 && cooldown <= 0) { const hw = toWorld(held); shoot(hw.x, hw.y); }
     const dm = Math.max(0, Math.round((gs.x - LX) / 20));
-    if (dm !== lastDist) { lastDist = dm; distEl.textContent = dm.toLocaleString('es-ES'); }
+    if (dm !== lastDist) { lastDist = dm; distEl.textContent = dm.toLocaleString(LOC()); }
     if (flightT > 7 && !hintWrap.hidden) hintWrap.hidden = true;
   } else if (state === 'landed' || state === 'over') {
     if (state === 'landed') {
@@ -1610,7 +1754,7 @@ function update(dt) {
 /* ---------- Dibujo ---------- */
 function setWorld() {
   const z = 1 + zoomK, s = scale * z * dpr;
-  const sx = (Math.random() - .5) * shake * 18, sy = (Math.random() - .5) * shake * 18;
+  const shk = SET.shake ? shake : 0, sx = (Math.random() - .5) * shk * 18, sy = (Math.random() - .5) * shk * 18;
   const cx = viewW / 2, cy = viewH / 2;
   ctx.setTransform(s, 0, 0, s, ((-camX - cx) * scale * z + cx * scale + sx) * dpr, ((-camY - cy) * scale * z + cy * scale + sy) * dpr);
 }
@@ -2461,6 +2605,7 @@ $('playBtn').addEventListener('click', onPlay);
 $('chPrev').addEventListener('click', () => selectChar(-1));
 $('chNext').addEventListener('click', () => selectChar(1));
 $('menuSnd').addEventListener('click', () => { sndBtn.click(); renderMenu(); });
+$('menuSet').addEventListener('click', () => { sfx('click'); panelSettings(); });
 menuEl.addEventListener('click', e => { if (e && e.target && e.target.closest && e.target.closest('button')) sfx('click'); });
 $('shopClose').addEventListener('click', closeShop);
 window.addEventListener('keydown', e => {
@@ -2480,8 +2625,8 @@ function makeVig() {
 function resize() {
   const r = canvas.getBoundingClientRect();
   W = Math.max(1, r.width); H = Math.max(1, r.height);
-  const base = Math.min(window.devicePixelRatio || 1, 2), cap = Math.sqrt(1300000 / (W * H));
-  dpr = Math.max(.75, Math.min(base, cap) * drs);
+  const base = Math.min(window.devicePixelRatio || 1, SET.q === 'low' ? 1 : 2), cap = Math.sqrt((SET.q === 'high' ? 2300000 : 1300000) / (W * H));
+  dpr = Math.max(.75, Math.min(base, cap) * (SET.q === 'auto' ? drs : 1));
   canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
   baseScale = H > W ? Math.min(W / 520, H / 700) : Math.min(W / 760, H / 560);
   TS = H > W ? 1.35 : 1;
@@ -2494,13 +2639,14 @@ window.addEventListener('resize', resize);
 resize();
 reset();
 fillIcons(); syncSel(); renderMenu();
+document.documentElement.lang = SET.lang; if (SET.lang === 'en') { startTr(); trTree(document.body); }
 let last = 0;
 function loop(ts) {
   const rawMs = Math.min(100, (ts - last) || 16);
   last = ts;
   ema = ema * .92 + rawMs * .08;
-  if (frameN > 90 && ema > 30 && ts - lastDrs > 2500 && drs > .7) { drs *= .88; lastDrs = ts; ema = 18; resize(); }
-  else if (ema < 14 && drs < 1 && ts - lastDrs > 6000) { drs = Math.min(1, drs * 1.1); lastDrs = ts; resize(); }
+  if (SET.q === 'auto' && frameN > 90 && ema > 30 && ts - lastDrs > 2500 && drs > .7) { drs *= .88; lastDrs = ts; ema = 18; resize(); }
+  else if (SET.q === 'auto' && ema < 14 && drs < 1 && ts - lastDrs > 6000) { drs = Math.min(1, drs * 1.1); lastDrs = ts; resize(); }
   const dt = Math.min(.1, rawMs / 1000);
   if (dt > .034) { update(dt / 2); update(dt / 2); } else update(dt);
   draw();

@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Tiro Lento</string>
-    <string name="title_activity_main">Tiro Lento</string>
+    <string name="app_name">Slow Shooter</string>
+    <string name="title_activity_main">Slow Shooter</string>
     <string name="package_name">com.tirolento.game</string>
     <string name="custom_url_scheme">com.tirolento.game</string>
     <!-- Sustituye por el ID numérico de tu proyecto de Play Games Services -->
-    <string name="game_services_project_id">000000000000</string>
+    <string name="game_services_project_id">4972970122620192333</string>
 </resources>
