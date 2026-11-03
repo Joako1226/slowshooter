@@ -1,0 +1,10 @@
+{
+  "appId": "com.tirolento.game",
+  "appName": "Tiro Lento",
+  "webDir": "www",
+  "backgroundColor": "#150e1f",
+  "android": { "allowMixedContent": false },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 800, "backgroundColor": "#150e1f", "showSpinner": false }
+  }
+}
