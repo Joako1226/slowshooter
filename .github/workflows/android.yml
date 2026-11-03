@@ -12,6 +12,9 @@ jobs:
       - run: npm install
       - run: python3 build.py
       - run: npx cap sync android
+      - name: Generar iconos
+        run: |
+          if [ -f assets/icon-only.png ]; then npx --yes @capacitor/assets generate --android; fi
       - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
         with:
