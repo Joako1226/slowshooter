@@ -368,7 +368,7 @@ let state = 'aim', gs, targets = [], props = [], triggers = [], bullets = [], pa
 let ammo = 6, score = 0, combo = 0, bestCombo = 0, hits = 0, genX = 520, sinceBoost = 0, sinceAmmo = 0, sincePower = 0, runStars = 0, skyX = 0, rescueCool = 0, zoneReached = 0, nextFly = 380, lastDist = -1, boostCool = 0;
 let cooldown = 0, shake = 0, camX = 0, camY = 0, time = 0, timeScale = 1, flightT = 0, landT = 0;
 const MODES = {
-  classic: { name: 'Clásico', desc: 'Sin final. Empiezas con 2 rebotes de seguridad y recargas balas solo.', ammoCap: 99, sm: 1, km: 1, rescue: true, fs: 2, clock: 0, key: 'tirolento-best' },
+  classic: { name: 'Clásico', desc: 'Sin final. Recargas balas muy despacio: apunta bien cada tiro.', ammoCap: 99, sm: 1, km: 1, rescue: true, fs: 0, clock: 0, key: 'tirolento-best' },
   time: { name: 'Contrarreloj', desc: '30 s. Captura los relojes para ganar tiempo. El suelo te rebota.', ammoCap: 99, sm: 1, km: 1, rescue: true, clock: 30, key: 'tirolento-best-time' },
   hard: { name: 'Pólvora', desc: 'Solo 4 balas y casi sin ayudas. Puntos y ★ ×2.', ammoCap: 4, sm: 2, km: 2, rescue: false, clock: 0, key: 'tirolento-best-hard' }
 };
@@ -1422,7 +1422,7 @@ function update(dt) {
     if (flightT > 3.5 && !hintWrap.hidden) hintWrap.hidden = true;
     if (ammo < maxAmmo() && fx.rapid <= 0) {
       regenT += dt;
-      if (regenT > (MODE.rescue ? (ammo === 0 ? .8 : 1.5) : 3)) { regenT = 0; ammo++; sfx('pop'); hud(); }
+      if (regenT > (MODE.rescue ? (ammo === 0 ? 5 : 9) : 16)) { regenT = 0; ammo++; sfx('pop'); hud(); }
     } else regenT = 0;
     if (gs.trail.length > 18) gs.trail.shift();
     if (gs.x < 40) { gs.x = 40; gs.vx = Math.abs(gs.vx) * .2; }
@@ -2480,8 +2480,8 @@ function makeVig() {
 function resize() {
   const r = canvas.getBoundingClientRect();
   W = Math.max(1, r.width); H = Math.max(1, r.height);
-  const base = Math.min(window.devicePixelRatio || 1, 1.5), cap = Math.sqrt(900000 / (W * H));
-  dpr = Math.max(.6, Math.min(base, cap) * drs);
+  const base = Math.min(window.devicePixelRatio || 1, 2), cap = Math.sqrt(1300000 / (W * H));
+  dpr = Math.max(.75, Math.min(base, cap) * drs);
   canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
   baseScale = H > W ? Math.min(W / 520, H / 700) : Math.min(W / 760, H / 560);
   TS = H > W ? 1.35 : 1;
@@ -2499,7 +2499,8 @@ function loop(ts) {
   const rawMs = Math.min(100, (ts - last) || 16);
   last = ts;
   ema = ema * .92 + rawMs * .08;
-  if (ema > 26 && ts - lastDrs > 1200 && drs > .55) { drs *= .85; lastDrs = ts; ema = 18; resize(); }
+  if (frameN > 90 && ema > 30 && ts - lastDrs > 2500 && drs > .7) { drs *= .88; lastDrs = ts; ema = 18; resize(); }
+  else if (ema < 14 && drs < 1 && ts - lastDrs > 6000) { drs = Math.min(1, drs * 1.1); lastDrs = ts; resize(); }
   const dt = Math.min(.1, rawMs / 1000);
   if (dt > .034) { update(dt / 2); update(dt / 2); } else update(dt);
   draw();
