@@ -289,6 +289,7 @@ button{touch-action:manipulation}
       <p class="eyebrow">Has caído</p>
       <h2 class="mt" id="revT">¿Seguir jugando?</h2>
       <p class="mp2">Mira un anuncio y revives con impulso, escudo y balas llenas. Solo una vez por partida.</p>
+      <p class="mp2" id="adErr" hidden></p>
       <div class="actions"><button class="btn" id="revYes" type="button">Revivir (anuncio)</button><button class="btn alt" id="revNo" type="button">No, gracias</button></div>
     </div>
   </section>
@@ -585,7 +586,7 @@ const EN = {
   'Toca para disparar. Revienta dinamita cerca de ti para subir': 'Tap to shoot. Blow up dynamite near you to rise',
   'Dispara hacia abajo: el retroceso de la escopeta te impulsa': 'Shoot downward: the shotgun recoil boosts you',
   'Idioma': 'Language', 'Efectos de sonido': 'Sound effects', 'Volumen': 'Volume', 'Vibración': 'Vibration', 'Sacudida de pantalla': 'Screen shake', 'Calidad gráfica': 'Graphics quality', 'Alta': 'High', 'Baja': 'Low',
-  'Clasificación': 'Leaderboard', 'Anuncio no disponible': 'Ad not available'
+  'Clasificación': 'Leaderboard', 'Cargando anuncio…': 'Loading ad…', ' (sin plugin)': ' (no plugin)', ' (tiempo agotado)': ' (timed out)', 'Anuncio no disponible': 'Ad not available'
 };
 const EN_RX = new RegExp(Object.keys(EN).sort((a, b) => b.length - a.length).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'g');
 const trCache = new Map();
@@ -1481,7 +1482,7 @@ function testAd(onReward) {
 }
 let revived = false, skipRevive = false;
 function finish() {
-  if (!revived && !skipRevive && !MODE.clock && state !== 'over' && score >= 100) { state = 'revive'; $('revive').hidden = false; return; }
+  if (!revived && !skipRevive && !MODE.clock && state !== 'over' && score >= 100) { state = 'revive'; $('adErr').hidden = true; $('revive').hidden = false; return; }
   skipRevive = false; finishReal();
 }
 function revive() {

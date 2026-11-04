@@ -33,22 +33,34 @@ async function showLeaderboardNative() {
   if (!NATIVE || !P.CapacitorGameConnect) return;
   try { if (!gcSigned) { await P.CapacitorGameConnect.signIn(); gcSigned = true; } await P.CapacitorGameConnect.showLeaderboard({ leaderboardID: CFG.leaderboards[modeId] }); } catch (e) { /* sin sesión */ }
 }
+function adNote(t) { const e = document.getElementById('adErr'); if (!e) return; e.textContent = t || ''; e.hidden = !t; }
 const ADS = {
   provider: NATIVE ? 'admob' : 'test',
+  busy: false,
   showRewarded(onReward) {
     if (this.provider === 'test') { testAd(onReward); return; }
-    if (!P.AdMob || !adReady) { callout('Anuncio no disponible', '#ff9a4d'); return; }
-    let rewarded = false;
+    if (this.busy) return;
+    this.busy = true;
     const subs = [];
-    const done = () => { subs.forEach(h => h && h.remove && h.remove()); if (rewarded) onReward(); };
+    let rewarded = false, shown = false, finished = false, timer = 0;
+    const end = () => { finished = true; this.busy = false; clearTimeout(timer); subs.forEach(h => h && h.remove && h.remove()); };
+    const fail = (why) => { if (finished) return; end(); adNote('Anuncio no disponible' + (why ? ' (' + why + ')' : '')); };
     (async () => {
       try {
+        if (!P.AdMob) { fail('sin plugin'); return; }
+        adNote('Cargando anuncio…');
+        timer = setTimeout(() => fail('tiempo agotado'), 20000);
+        if (!adReady) { await P.AdMob.initialize({ initializeForTesting: CFG.testing }); adReady = true; }
         subs.push(await P.AdMob.addListener('onRewardedVideoAdReward', () => { rewarded = true; }));
-        subs.push(await P.AdMob.addListener('onRewardedVideoAdDismissed', done));
-        subs.push(await P.AdMob.addListener('onRewardedVideoAdFailedToShow', () => { subs.forEach(h => h && h.remove && h.remove()); callout('Anuncio no disponible', '#ff9a4d'); }));
+        subs.push(await P.AdMob.addListener('onRewardedVideoAdDismissed', () => { if (finished) return; end(); adNote(''); if (rewarded) onReward(); }));
+        subs.push(await P.AdMob.addListener('onRewardedVideoAdFailedToLoad', e => fail(e && (e.message || e.code))));
+        subs.push(await P.AdMob.addListener('onRewardedVideoAdFailedToShow', e => fail(e && (e.message || e.code))));
+        subs.push(await P.AdMob.addListener('onRewardedVideoAdShowed', () => { shown = true; clearTimeout(timer); adNote(''); }));
         await P.AdMob.prepareRewardVideoAd({ adId: CFG.rewardedAdUnit, isTesting: CFG.testing });
+        if (finished) return;
         await P.AdMob.showRewardVideoAd();
-      } catch (e) { subs.forEach(h => h && h.remove && h.remove()); callout('Anuncio no disponible', '#ff9a4d'); }
+        if (!shown) { clearTimeout(timer); }
+      } catch (e) { fail(e && (e.message || e.code || String(e))); }
     })();
   }
 };
