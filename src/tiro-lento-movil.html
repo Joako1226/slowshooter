@@ -367,6 +367,12 @@ const DEF = {
   balloon: { r: 38, pts: 40 }, ammo: { r: 28, pts: 20 }, power: { r: 30, pts: 30 }, vulture: { r: 24, pts: 35 },
   asteroid: { r: 30, pts: 60 }, satellite: { r: 28, pts: 80 }, ufo: { r: 34, pts: 120 }, plane: { r: 30, pts: 70 }, angel: { r: 28, pts: 100 }, mine: { r: 34, pts: 40 }, clock: { r: 28, pts: 10 }, missile: { r: 22, pts: 80 }
 };
+const BUMP = {
+  vulture: { down: 380, slow: .88, sh: .35, snd: 'pop' }, plane: { down: 500, slow: .84, sh: .45, snd: 'ping' },
+  satellite: { down: 600, slow: .82, sh: .5, snd: 'ping' }, ufo: { down: 650, slow: .8, sh: .5, snd: 'ping' },
+  asteroid: { down: 800, slow: .74, sh: .65, snd: 'wood' }
+};
+let bumpCD = 0;
 const rnd = (a, b) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const angDiff = (a, b) => { let d = b - a; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU; return d; };
@@ -377,24 +383,24 @@ let ammo = 6, score = 0, combo = 0, bestCombo = 0, hits = 0, genX = 520, sinceBo
 let cooldown = 0, shake = 0, camX = 0, camY = 0, time = 0, timeScale = 1, flightT = 0, landT = 0;
 const MODES = {
   classic: { name: 'Clásico', desc: 'Sin final. Recargas balas muy despacio: apunta bien cada tiro.', ammoCap: 99, sm: 1, km: 1, rescue: true, fs: 0, clock: 0, key: 'tirolento-best' },
-  time: { name: 'Contrarreloj', desc: '30 s. Captura los relojes para ganar tiempo. El suelo te rebota.', ammoCap: 99, sm: 1, km: 1, rescue: true, clock: 30, key: 'tirolento-best-time' },
+  time: { name: 'Contrarreloj', desc: '30 s. Captura los relojes para ganar tiempo. Cada rebote en el suelo te quita la mitad.', ammoCap: 99, sm: 1, km: 1, rescue: true, clock: 30, key: 'tirolento-best-time' },
   hard: { name: 'Pólvora', desc: 'Solo 4 balas y casi sin ayudas. Puntos y ★ ×2.', ammoCap: 4, sm: 2, km: 2, rescue: false, clock: 0, key: 'tirolento-best-hard' }
 };
 let nextClockX = 0, MODE = MODES.classic, modeId = 'classic', clock = 0, perfect = false, doneNow = [];
-let missileT = 90, incoming = null, baseScale = 1, zoomF = 1, regenT = 0, TS = 1, taps = [], hitStop = 0, zoomK = 0, flashA = 0, flashC = '255,255,255', comboT = 0, rainT = 0, drs = 1, lastDrs = 0, ema = 16, flyStars = [], vig = null, frameN = 0, VS = 1;
+let missileT = 90, incoming = null, baseScale = 1, zoomF = 1, regenT = 0, frenzyCD = 0, TS = 1, taps = [], hitStop = 0, zoomK = 0, flashA = 0, flashC = '255,255,255', comboT = 0, rainT = 0, drs = 1, lastDrs = 0, ema = 16, flyStars = [], vig = null, frameN = 0, VS = 1;
 let pull = null, held = null, best = 0, floorY = GROUND, muted = false, AC = null;
 try { best = +localStorage.getItem(MODE.key) || 0; } catch (e) { best = 0; }
 bestEl.textContent = best;
 
 /* ---------- Skins, tienda y estrellas ---------- */
-const STATS = o => Object.assign({ maxAmmo: 6, kick: 180, cd: .15, pellets: 1, spread: 0, burst: 1, pierce: 0, boom: 0, glide: 1, shield: 0, scoreMul: 1, starMul: 1, muzzle: 48, range: 2600 }, o);
+const STATS = o => Object.assign({ maxAmmo: 6, kick: 180, cd: .15, pellets: 1, spread: 0, burst: 1, pierce: 0, boom: 0, glide: 1, shield: 0, scoreMul: 1, starMul: 1, muzzle: 48, range: 2600, regen: 1 }, o);
 const CHARS = [
   { id: 'vaquero', name: 'Vaquero', price: 0, desc: 'Equilibrado. Revólver de 6 balas.', tip: 'Toca para disparar. Revienta dinamita cerca de ti para subir',
     shirt: '#b8502a', sleeve: '#8f3a1f', belt: '#e8b24a', hat: '#4a2e1f', band: '#e8b24a', pants: '#2e3a6b', bandana: '#9a2f3a', trail: '255,210,122', bullet: '#fff6d0',
     st: STATS({}) },
   { id: 'willy', name: 'Willy el Viejo', price: 8, desc: 'Escopeta con solo 3 cartuchos. Cada disparo suelta perdigones y te empuja con fuerza.', tip: 'Dispara hacia abajo: el retroceso de la escopeta te impulsa',
     shirt: '#7d8b5c', sleeve: '#5f6c44', belt: '#5a3522', hat: '#d9c88a', band: '#8a5a33', hatStyle: 'straw', brim: 27, pants: '#5b4a3a', bandana: '#7d8b5c', tone: '#e0b48a', beard: '#f4f1ea', straps: true, gun: 'shotgun', trail: '240,235,215', bullet: '#ffe9b0',
-    st: STATS({ maxAmmo: 3, kick: 2600, cd: .38, pellets: 6, spread: .15, muzzle: 78, range: 1100 }) },
+    st: STATS({ maxAmmo: 3, kick: 2600, cd: .38, pellets: 6, spread: .15, muzzle: 78, range: 1100, regen: 3.5 }) },
   { id: 'rita', name: 'Rita Ráfagas', price: 15, desc: 'Cada toque lanza una ráfaga de 3 balas. 4 cargas.', tip: 'Cada toque lanza una ráfaga de 3 balas',
     shirt: '#c23b6e', sleeve: '#9b2a56', belt: '#f0dfc0', hat: '#2a1450', band: '#ff8fc0', hair: '#3a1a10', pants: '#3a2a5a', bandana: '#ffd27a', gun: 'smg', trail: '255,143,192', bullet: '#ffb0d6',
     st: STATS({ maxAmmo: 4, burst: 3, cd: .34, kick: 100, muzzle: 58 }) },
@@ -556,14 +562,14 @@ const EN = {
   'Nivel ': 'Level ', '¡NIVEL ': 'LEVEL ', 'Nv ': 'Lv ',
   'Clásico': 'Classic', 'Contrarreloj': 'Time Attack', 'Pólvora': 'Gunpowder',
   'Sin final. Recargas balas muy despacio: apunta bien cada tiro.': 'Endless. Bullets reload very slowly: make every shot count.',
-  '30 s. Captura los relojes para ganar tiempo. El suelo te rebota.': '30 s. Grab clocks to gain time. The ground bounces you.',
+  '30 s. Captura los relojes para ganar tiempo. Cada rebote en el suelo te quita la mitad.': '30 s. Grab clocks to gain time. Each ground bounce costs you half of it.',
   'Solo 4 balas y casi sin ayudas. Puntos y ★ ×2.': 'Only 4 bullets and almost no help. Score and ★ ×2.',
   'Se renuevan cada día. Las ★ se cobran al cumplirlas.': 'Refreshes every day. ★ are paid when completed.',
   'Juega partidas para ganar XP y subir de nivel': 'Play runs to earn XP and level up', 'Partidas jugadas': 'Games played', 'Récord ': 'Best ',
   'Acierta ': 'Hit ', ' objetivos': ' targets', 'Llega a ': 'Reach ', ' m en un solo tiro': ' m in a single shot', 'Consigue una racha de ': 'Get a streak of ',
   'Recoge ': 'Collect ', ' estrellas': ' stars', 'Llega al espacio': 'Reach space', 'Rompe ': 'Break ', ' botellas doradas': ' golden bottles',
   'Activa el Frenesí ': 'Trigger Frenzy ', ' veces': ' times', 'Puntúa ': 'Score ', ' en Contrarreloj': ' in Time Attack', 'Captura ': 'Capture ', ' relojes': ' clocks', 'Haz ': 'Make ', ' tiros perfectos': ' perfect shots',
-  '¡BOING!': 'BOING!', '¡DERRIBADO!': 'SHOT DOWN!', '¡EL CIELO!': 'HEAVEN!', '¡EL ESPACIO!': 'SPACE!', '¡ESCUDO!': 'SHIELD!', '¡FRENESÍ!': 'FRENZY!', '¡IMPACTO!': 'HIT!',
+  '¡BOING!': 'BOING!', '¡CHOQUE!': 'CRASH!', '¡DERRIBADO!': 'SHOT DOWN!', '¡EL CIELO!': 'HEAVEN!', '¡EL ESPACIO!': 'SPACE!', '¡ESCUDO!': 'SHIELD!', '¡FRENESÍ!': 'FRENZY!', '¡IMPACTO!': 'HIT!',
   '¡IMPARABLE!': 'UNSTOPPABLE!', '¡IMPULSO!': 'BOOST!', '¡LEYENDA!': 'LEGENDARY!', '¡MISIL GRANDE!': 'BIG MISSILE!', '¡MISIL!': 'MISSILE!', '¡MISIÓN CUMPLIDA!': 'MISSION COMPLETE!',
   '¡MULTI!': 'MULTI!', '¡PERFECTO!': 'PERFECT!', '¡REBOTE!': 'BOUNCE!', '¡REVIVES!': 'REVIVED!', '¡TRIPLE!': 'TRIPLE!',
   '· El cielo': '· Heaven', '· Espacio': '· Space', 'Derribado por un misil': 'Shot down by a missile',
@@ -836,7 +842,11 @@ function spawnFlyers() {
 function bounce(fl) {
   gs.y = fl - FOOT - 2; gs.vy = -1250; gs.vx = Math.max(gs.vx, 380) + 120; gs.boostT = .5; boostCool = 1;
   dust(gs.x, fl, 12, 220); juice(.08, .5, .15); sfx('boost');
+  const lost = clock < 5 ? clock : clock / 2;
+  clock = clock < 5 ? 0 : clock - lost;
+  clockvEl.textContent = Math.max(0, Math.ceil(clock)); clockEl.classList.add('low');
   pops.push({ x: gs.x, y: gs.y - 78, text: '¡BOING!', life: 1, max: 1, c: '#5fe3c0' });
+  pops.push({ x: gs.x, y: gs.y - 130, text: '-' + Math.ceil(lost) + ' s', life: 1.3, max: 1.3, c: '#ff5a4a', z: 1.4 });
 }
 function rebound(fl) {
   fx.shield--; gs.y = fl - FOOT - 2; gs.vy = -1250; gs.vx = Math.max(gs.vx, 450) + 150; gs.boostT = .6; boostCool = 1;
@@ -1161,7 +1171,7 @@ function callout(text, col) {
   clearTimeout(calloutTimer); calloutTimer = setTimeout(() => { calloutEl.hidden = true; }, 950);
 }
 function startFrenzy() {
-  fx.frenzy = POWER.frenzy.dur; fx.rapid = Math.max(fx.rapid, POWER.frenzy.dur); rainT = 0;
+  frenzyCD = POWER.frenzy.dur + 20; fx.frenzy = POWER.frenzy.dur; fx.rapid = Math.max(fx.rapid, POWER.frenzy.dur); rainT = 0;
   mEvent('frenzy', 1); callout('¡FRENESÍ!', '#ff4fd8'); juice(.12, .8, .45, '255,90,220'); sfx('frenzy');
 }
 function spawnFlyStar(t, n) {
@@ -1276,7 +1286,7 @@ function hitTarget(t, touch) {
   if (!t.alive) return;
   if (t.type === 'missile' && t.hp > 1) { t.hp--; sparks(t); sfx('ping'); juice(.02, .2, .1, '255,255,255'); return; }
   t.alive = false; hits++;
-  if (!touch) { combo++; bestCombo = Math.max(bestCombo, combo); }
+  if (!touch && fx.rapid <= 0) { combo++; bestCombo = Math.max(bestCombo, combo); }
   const m = touch ? 1 : Math.min(5, combo), st = chr().st, skm = st.starMul * MODE.km, gain = Math.round(t.pts * m * st.scoreMul * MODE.sm * (fx.frenzy > 0 ? 2 : 1) * (perfect && !touch ? 1.5 : 1));
   score += gain;
   pops.push({ x: t.x, y: t.y - t.r - 8, text: '+' + gain + (m > 1 ? ' x' + m : ''), life: 1.1, max: 1.1, c: t.type === 'star' ? '#fff2b0' : '#ffd27a', z: .9 + m * .14 });
@@ -1315,7 +1325,7 @@ function hitTarget(t, touch) {
       pops.push({ x: t.x, y: t.y - t.r - 34, text: '+3 balas', life: 1.1, max: 1.1, c: '#fff2b0' });
       break;
   }
-  if (!touch && combo % 4 === 0 && ammo < st.maxAmmo) {
+  if (!touch && fx.rapid <= 0 && combo % (st.pellets > 1 ? 8 : 4) === 0 && ammo < st.maxAmmo) {
     ammo++;
     pops.push({ x: t.x, y: t.y - t.r - 36, text: '+1 bala', life: 1.1, max: 1.1, c: '#fff2b0' });
   }
@@ -1331,7 +1341,7 @@ function hitTarget(t, touch) {
     juice(.012 + .006 * Math.min(combo, 8), 0);
     const tier = COMBO_TIERS[combo];
     if (tier) { callout(tier[0], tier[1]); juice(.06, .4, .22, '255,220,120'); }
-    if (combo === 8 && fx.frenzy <= 0) startFrenzy();
+    if (combo >= 14 && fx.frenzy <= 0 && frenzyCD <= 0) startFrenzy();
   }
   hud(); bumpScore();
 }
@@ -1368,7 +1378,8 @@ function shoot(wx, wy) {
     }
     gs.recoil = 1;
     const kick = free ? st.kick * .3 : st.kick;
-    gs.vx -= c * kick * (st.pellets > 1 ? .3 : 1); gs.vy -= s * kick;
+    const upK = (s > 0 && gs.vy < 0) ? clamp(1 + gs.vy / 2200, .25, 1) : 1;
+    gs.vx -= c * kick * (st.pellets > 1 ? .3 : 1); gs.vy -= s * kick * upK;
     parts.push({ k: 'flash', x: mx, y: my, rot: ang, life: .07, max: .07 });
     parts.push({ k: 'casing', x: p0.x + c * 20, y: p0.y + s * 20, vx: -c * 70 + rnd(-30, 30), vy: -rnd(160, 260), g: 1300, rot: 0, vr: rnd(-20, 20), life: 1.8, max: 1.8 });
     shake = Math.max(shake, st.pellets > 1 ? .45 : .15); zoomK = Math.max(zoomK, st.pellets > 1 ? .03 : .012);
@@ -1403,7 +1414,7 @@ function reset() {
   state = 'aim'; timeScale = 1; time = 0; flightT = 0; landT = 0; floorY = GROUND;
   gs = { x: LX, y: LY, vx: 0, vy: 0, rot: 0, aim: -.5, aimT: -.5, face: 1, recoil: 0, trail: [], boostT: 0 };
   bullets = []; parts = []; pops = []; queue = []; pull = null;
-  ammo = maxAmmo(); score = 0; combo = 0; bestCombo = 0; hits = 0; cooldown = 0; shake = 0;
+  ammo = maxAmmo(); frenzyCD = 0; score = 0; combo = 0; bestCombo = 0; hits = 0; cooldown = 0; shake = 0;
   targets = []; props = []; genX = 520; sinceBoost = 0; sinceAmmo = 0; sincePower = 0; runStars = 0; skyX = 0; rescueCool = 0; zoneReached = 0; held = null; nextFly = 380; lastDist = -1; boostCool = 0;
   distEl.textContent = '0';
   for (const k of ALLK) fx[k] = 0;
@@ -1566,7 +1577,7 @@ function update(dt) {
     if (flightT > 3.5 && !hintWrap.hidden) hintWrap.hidden = true;
     if (ammo < maxAmmo() && fx.rapid <= 0) {
       regenT += dt;
-      if (regenT > (MODE.rescue ? (ammo === 0 ? 5 : 9) : 16)) { regenT = 0; ammo++; sfx('pop'); hud(); }
+      if (regenT > (MODE.rescue ? (ammo === 0 ? 5 : 9) : 16) * chr().st.regen) { regenT = 0; ammo++; sfx('pop'); hud(); }
     } else regenT = 0;
     if (gs.trail.length > 18) gs.trail.shift();
     if (gs.x < 40) { gs.x = 40; gs.vx = Math.abs(gs.vx) * .2; }
@@ -1590,6 +1601,7 @@ function update(dt) {
     gs.vy = Math.max(gs.vy, -3200); gs.vx = clamp(gs.vx, -2200, 3200);
     boostCool = Math.max(0, boostCool - dt);
     rescueCool = Math.max(0, rescueCool - dt);
+    if (frenzyCD > 0) frenzyCD -= dt;
     if (combo > 0 && fx.frenzy <= 0) { comboT -= dt; if (comboT <= 0) { combo = 0; hud(); } }
     if (combo > 1) comboEl.style.setProperty('--p', Math.round(clamp(fx.frenzy > 0 ? 1 : comboT / 3, 0, 1) * 100) + '%');
     rainT -= dt;
@@ -1676,7 +1688,15 @@ function update(dt) {
   if (state === 'flight') {
     for (const t of targets) {
       if (t.alive && (t.type === 'star' || t.type === 'ammo' || t.type === 'power' || t.type === 'clock') && Math.hypot(t.x - gs.x, t.y - gs.y) < t.r + 30) hitTarget(t, true);
+      const B = BUMP[t.type];
+      if (B && t.alive && !t.bumped && bumpCD <= 0 && fx.rocket <= 0 && Math.hypot(t.x - gs.x, t.y - gs.y) < t.r * .7 + 22) {
+        t.bumped = true; bumpCD = .35;
+        gs.vy = Math.max(gs.vy, 0) + B.down; gs.vx *= B.slow; gs.boostT = 0;
+        shake = Math.max(shake, B.sh); juice(.04, 0, .12, '255,170,80'); sfx(B.snd); vib('land');
+        pops.push({ x: gs.x, y: gs.y - 70, text: '¡CHOQUE!', life: .9, max: .9, c: '#ffb25a' });
+      }
     }
+    if (bumpCD > 0) bumpCD -= dt;
   }
   syncFx();
   // balas
