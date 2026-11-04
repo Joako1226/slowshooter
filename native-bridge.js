@@ -1,7 +1,7 @@
 /*--ADS--*/const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 // ====== CONFIGURACIÓN: sustituye por tus IDs reales antes de publicar ======
 const CFG = {
-  testing: true,                                           // pon false con tus IDs reales
+  testing: false,                                           // pon false con tus IDs reales
   rewardedAdUnit: 'ca-app-pub-2046215707383325/9122055316', // ID de prueba de Google (rewarded)
   leaderboards: {                                          // IDs de Play Games Services (uno por modo)
     classic: 'REEMPLAZA_ID_CLASICO',
